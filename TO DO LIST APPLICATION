@@ -1,0 +1,214 @@
+# DSA-Project-Using-CPP
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <bits/stdc++.h>
+#include <ctime>
+#include <iomanip>
+
+using namespace std;
+
+class Task {
+public:
+    string description;
+    string category;
+    bool completed;
+    string dueDate;
+    string priority;
+
+    Task(string description, string category, string priority, string dueDate) {
+        this->description = description;
+        this->category = category;
+        this->dueDate = dueDate;
+        this->priority = priority;
+        this->completed = false;
+    }
+};
+
+vector<Task> NotesAdded;
+vector<Task> DeletedTasks;
+vector<string> categories = {"Work", "Personal", "Study", "Shopping", "Other"};
+
+string getCurrentDate() {
+    auto now = time(nullptr);
+    tm* current = localtime(&now);
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d", current);
+    return string(buffer);
+}
+
+// Function to compare tasks based on priority
+bool compareTasksByPriority(const Task& a, const Task& b) {
+    map<string, int> priorityMap = {{"HIGH", 3}, {"MEDIUM", 2}, {"LOW", 1}};
+    return priorityMap[a.priority] > priorityMap[b.priority];
+}
+
+void displayTasks() {
+    if (NotesAdded.empty()) {
+        cout << "Please add some task first to View\n";
+    } else {
+        sort(NotesAdded.begin(), NotesAdded.end(), compareTasksByPriority);
+        cout << "\nTasks:\n";
+        cout << "   " << setw(20) << "Task" << " " << setw(10) << "Category" << " " << setw(10) << "Priority" << " " << setw(12) << "DueDate" << " " << "Status\n";
+        for (int i = 0; i < NotesAdded.size(); i++) {
+            cout << i + 1 << ". "
+                << setw(20) << NotesAdded[i].description << " "
+                << setw(10) << NotesAdded[i].category << " "
+                << setw(10) << NotesAdded[i].priority << " "
+                << setw(12) << NotesAdded[i].dueDate << " "
+                << (NotesAdded[i].completed ? "Completed" : "Pending") << "\n";
+        }
+    }
+}
+
+void markTaskAsCompleted() {
+    int taskNumber;
+    cout << "Enter task number to mark as completed: ";
+    cin >> taskNumber;
+    if (taskNumber > 0 && taskNumber <= NotesAdded.size()) {
+        NotesAdded[taskNumber - 1].completed = true;
+        cout << "Task marked as completed.\n";
+    } else {
+        cout << "Invalid Task Number\n";
+    }
+}
+
+void deleteTask() {
+    int taskNumber;
+    cout << "Enter task number to delete: ";
+    cin >> taskNumber;
+    if (taskNumber > 0 && taskNumber <= NotesAdded.size()) {
+        DeletedTasks.push_back(NotesAdded[taskNumber - 1]);
+        NotesAdded.erase(NotesAdded.begin() + taskNumber - 1);
+        cout << "Task deleted.\n";
+    } else {
+        cout << "Invalid Task Number\n";
+    }
+}
+
+void undoDelete() {
+    if (!DeletedTasks.empty()) {
+        NotesAdded.push_back(DeletedTasks.back());
+        DeletedTasks.pop_back();
+        cout << "Last deletion undone.\n";
+    } else {
+        cout << "No task to undo.\n";
+    }
+}
+
+void filterTaskByCategory() {
+    string category;
+    cout << "Enter category to filter by: ";
+    cin >> category;
+    bool found = false;
+    for (int i = 0; i < NotesAdded.size(); i++) {
+        if (NotesAdded[i].category == category) {
+            if (!found) {
+                cout << "\nFiltered Tasks:\n";
+                cout << "   " << setw(20) << "Task" << " " << setw(10) << "Category" << " " << setw(10) << "Priority" << " " << setw(12) << "DueDate" << " " << "Status\n";
+                found = true;
+            }
+            cout << i + 1 << ". "
+                << setw(20) << NotesAdded[i].description << " "
+                << setw(10) << NotesAdded[i].category << " "
+                << setw(10) << NotesAdded[i].priority << " "
+                << setw(12) << NotesAdded[i].dueDate << " "
+                << (NotesAdded[i].completed ? "Completed" : "Pending") << "\n";
+        }
+    }
+    if (!found) {
+        cout << "No tasks found for the given category.\n";
+    }
+}
+
+void addTask() {
+    string description, category, priority, dueDate;
+    cout << "Enter the Description: ";
+    cin.ignore();
+    getline(cin, description);
+
+    cout << "Choose a category: \n";
+    for (size_t i = 0; i < categories.size(); ++i) {
+        cout << i + 1 << ". " << categories[i] << "\n";
+    }
+
+    int categoryChoice;
+    cin >> categoryChoice;
+    if (categoryChoice > 0 && categoryChoice <= categories.size()) {
+        category = categories[categoryChoice - 1];
+    } else {
+        cout << "Invalid choice, defaulting to 'Other'\n";
+        category = "Other";
+    }
+
+    cout << "Enter priority (HIGH/LOW/MEDIUM): ";
+    cin >> priority;
+
+    cout << "Enter due date (YYYY-MM-DD) or press Enter for today's date: ";
+    cin.ignore();
+    getline(cin, dueDate);
+    if (dueDate.empty()) {
+        dueDate = getCurrentDate();
+    }
+
+    Task task(description, category, priority, dueDate);
+    NotesAdded.push_back(task);
+    cout << "Task added successfully.\n";
+}
+
+void remindTasks() {
+    string currentDate = getCurrentDate();
+    for (int i = 0; i < NotesAdded.size(); i++) {
+        if (!NotesAdded[i].completed && NotesAdded[i].dueDate == currentDate) {
+            cout << "Reminder: Task '" << NotesAdded[i].description << "' is due today!\n";
+        }
+    }
+}
+
+void displayMenu() {
+    int choice;
+    do {
+        remindTasks();
+        cout << "\nMenu:\n"
+            << "1. Add Task\n"
+            << "2. View Task\n"
+            << "3. Mark Task as Completed\n"
+            << "4. Delete Task\n"
+            << "5. Filter Task By Category\n"
+            << "6. Undo Last Delete\n"
+            << "7. Exit\n"
+            << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                addTask();
+                break;
+            case 2:
+                displayTasks();
+                break;
+            case 3:
+                markTaskAsCompleted();
+                break;
+            case 4:
+                deleteTask();
+                break;
+            case 5:
+                filterTaskByCategory();
+                break;
+            case 6:
+                undoDelete();
+                break;
+            case 7:
+                cout << "Goodbye! Please do the tasks on time.\n";
+                break;
+            default:
+                cout << "Invalid choice, please try again.\n";
+        }
+    } while (choice != 7);
+}
+
+int main() {
+    displayMenu();
+    return 0;
+}
